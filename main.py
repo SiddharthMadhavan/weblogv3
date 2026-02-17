@@ -28,8 +28,10 @@ def fit_arima_model(_train_data, order=(12, 2, 13)):
     Fit ARIMA model to training data.
     
     Args:
-        _train_data: Training dataset (underscore prefix for non-hashable param)
-        order: ARIMA order (p, d, q)
+        _train_data: Training dataset. The underscore prefix tells Streamlit 
+                     to skip hashing this parameter for cache validation, which 
+                     is necessary for pandas Series/DataFrame objects.
+        order: ARIMA order (p, d, q) tuple
     
     Returns:
         Fitted ARIMA model
@@ -42,18 +44,29 @@ st.set_page_config(page_title='Web Log Analysis App', layout='wide', page_icon="
 # Function to style text with HTML escaping for security
 def styled_text(text, font_size=18, color='black', weight='normal', align='left'):
     """
-    Create styled HTML text with proper escaping to prevent XSS attacks.
+    Create styled HTML text with proper escaping to prevent XSS and CSS injection attacks.
     
     Args:
         text: The text content to display
-        font_size: Font size in pixels
-        color: Text color
-        weight: Font weight (normal, bold, etc.)
-        align: Text alignment (left, center, right)
+        font_size: Font size in pixels (validated to be positive integer)
+        color: Text color (validated against safe CSS colors)
+        weight: Font weight (validated against safe values)
+        align: Text alignment (validated against safe values)
     
     Returns:
-        HTML string with escaped text
+        HTML string with escaped text and validated styles
     """
+    # Validate and sanitize parameters
+    safe_colors = ['black', 'white', 'red', 'blue', 'green', 'orange', 'purple', 'gray', 'yellow']
+    safe_weights = ['normal', 'bold', 'lighter', 'bolder']
+    safe_aligns = ['left', 'center', 'right', 'justify']
+    
+    # Use defaults for invalid values
+    font_size = int(font_size) if isinstance(font_size, (int, float)) and font_size > 0 else 18
+    color = color if color in safe_colors else 'black'
+    weight = weight if weight in safe_weights else 'normal'
+    align = align if align in safe_aligns else 'left'
+    
     escaped_text = html.escape(str(text))
     return f'<p style="font-size:{font_size}px; color:{color}; font-weight:{weight}; text-align:{align};">{escaped_text}</p>'
 
@@ -65,11 +78,16 @@ def colored_box(title, content, color):
     Args:
         title: Box title
         content: Box content
-        color: Background color
+        color: Background color (validated against safe CSS colors)
     
     Returns:
-        HTML string with escaped content
+        HTML string with escaped content and validated color
     """
+    # Validate color parameter
+    safe_colors = ['blue', 'green', 'orange', 'red', 'lightgreen', 'lightblue', 
+                   'lightyellow', 'lightgray', 'purple', 'pink', 'cyan']
+    color = color if color in safe_colors else 'lightgray'
+    
     escaped_title = html.escape(str(title))
     escaped_content = html.escape(str(content))
     return f'<div style="background-color:{color}; padding: 10px; border-radius: 5px;"><h2>{escaped_title}</h2><p>{escaped_content}</p></div>'
@@ -160,15 +178,13 @@ if (button1 == 'Agree'):
 
             st.write(styled_text("Analysis Results:", font_size=24, weight='bold', color='white', align='center'), unsafe_allow_html=True)
 
-            col1, col2, col3, col4 = st.columns(4)
+            col1, col2, col3 = st.columns(3)
             with col1:
                 st.write(colored_box("Unique IP Addresses:", str(unique_ips), 'blue'), unsafe_allow_html=True)
             with col2:
                 st.write(colored_box("Unique URLs:", str(unique_urls), 'green'), unsafe_allow_html=True)
             with col3:
                 st.write(colored_box("Total Requests:", str(total_requests), 'orange'), unsafe_allow_html=True)
-            with col4:
-                st.write(colored_box("Unique Visitors:", str(unique_ips), 'red'), unsafe_allow_html=True)
                 
             st.subheader("Additional Information:")
     
@@ -190,12 +206,12 @@ if (button1 == 'Agree'):
             aggregated_data.set_index('Date', inplace=True)
             target_variable = aggregated_data['request_count']
 
-            # Apply differencing to remove trend and seasonality
-            differenced_data = target_variable    
+            # Prepare data for ARIMA modeling
+            model_input = target_variable    
 
             # Split the Data
-            train_data = differenced_data[:-30]
-            test_data = differenced_data[-30:]
+            train_data = model_input[:-30]
+            test_data = model_input[-30:]
 
             # Fit the ARIMA Model using module-level cached function
             try:
