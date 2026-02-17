@@ -8,7 +8,7 @@ Web log analysis is an exciting field that involves the use of web analytics sof
 ## Setup Instructions
 
 ### Prerequisites
-- Python 3.8 or higher
+- Python 3.9 or higher
 - pip package manager
 
 ### Installation

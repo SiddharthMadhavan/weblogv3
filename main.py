@@ -8,6 +8,9 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 
+# Application version
+VERSION = '4.01'
+
 # Module-level cached functions for better performance
 @st.cache_data
 def load_csv_data(file):
@@ -39,7 +42,7 @@ def fit_arima_model(_train_data, order=(12, 2, 13)):
     return ARIMA(_train_data, order=order).fit()
 
 # Set Streamlit page layout
-st.set_page_config(page_title='Web Log Analysis App', layout='wide', page_icon=":fax:",)
+st.set_page_config(page_title='Web Log Analysis App', layout='wide', page_icon=":fax:")
 
 # Function to style text with HTML escaping for security
 def styled_text(text, font_size=18, color='black', weight='normal', align='left'):
@@ -106,7 +109,7 @@ def expandable_section(title, content):
 
 # Code for website design
 st.title('Web Log Analysis App')
-st.subheader('V 4.01')
+st.subheader(f'V {VERSION}')
 
 # Disclaimer
 with st.expander('Disclaimer', expanded=True):
@@ -240,6 +243,7 @@ if (button1 == 'Agree'):
                     pred_no = int(prediction_count)
                     if pred_no <= 0:
                         st.error("Please enter a positive number.")
+                        st.stop()
                     elif pred_no > 365:
                         st.warning("Warning: Predicting more than 365 days ahead may be unreliable.")
                         
