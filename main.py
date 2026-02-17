@@ -8,6 +8,34 @@ import streamlit as st
 import plotly.graph_objects as go
 import plotly.express as px
 
+# Module-level cached functions for better performance
+@st.cache_data
+def load_csv_data(file):
+    """
+    Load and parse CSV file with validation.
+    
+    Args:
+        file: Uploaded file object
+    
+    Returns:
+        DataFrame containing the parsed CSV data
+    """
+    return pd.read_csv(file)
+
+@st.cache_resource
+def fit_arima_model(_train_data, order=(12, 2, 13)):
+    """
+    Fit ARIMA model to training data.
+    
+    Args:
+        _train_data: Training dataset (underscore prefix for non-hashable param)
+        order: ARIMA order (p, d, q)
+    
+    Returns:
+        Fitted ARIMA model
+    """
+    return ARIMA(_train_data, order=order).fit()
+
 # Set Streamlit page layout
 st.set_page_config(page_title='Web Log Analysis App', layout='wide', page_icon=":fax:",)
 
@@ -83,13 +111,8 @@ if (button1 == 'Agree'):
             st.error("File size exceeds 100MB limit. Please upload a smaller file.")
         else:
             try:
-                # Use caching to avoid re-reading the file on every interaction
-                @st.cache_data
-                def load_data(file):
-                    """Load and parse CSV file with validation."""
-                    return pd.read_csv(file)
-                
-                log_data = load_data(uploaded_file)
+                # Use module-level cached function for data loading
+                log_data = load_csv_data(uploaded_file)
                 
                 # Validate that required columns exist
                 required_columns = ['Time', 'IP', 'URL', 'Status']
@@ -174,21 +197,7 @@ if (button1 == 'Agree'):
             train_data = differenced_data[:-30]
             test_data = differenced_data[-30:]
 
-            # Fit the ARIMA Model with caching
-            @st.cache_data
-            def fit_arima_model(train_data, order=(12, 2, 13)):
-                """
-                Fit ARIMA model to training data.
-                
-                Args:
-                    train_data: Training dataset
-                    order: ARIMA order (p, d, q)
-                
-                Returns:
-                    Fitted ARIMA model
-                """
-                return ARIMA(train_data, order=order).fit()
-            
+            # Fit the ARIMA Model using module-level cached function
             try:
                 order = (12, 2, 13)
                 model = fit_arima_model(train_data, order)

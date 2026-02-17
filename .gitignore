@@ -35,13 +35,9 @@ env/
 *.swp
 *.swo
 *~
-.DS_Store
 
 # Jupyter Notebook
 .ipynb_checkpoints
-
-# PyCharm
-.idea/
 
 # Streamlit
 .streamlit/
